@@ -6,22 +6,6 @@ const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 };
 
-// export const loginUser = async (req, res) => {
-//   const { phone, password } = req.body;
-//   const user = await User.findOne({ phone });
-//   if (user && (await user.matchPassword(password))) {
-//     res.json({
-//       id: user._id,
-//       name: user.name,
-//       phone: user.phone,
-//       userType: user.userType,
-//       token: generateToken(user._id),
-//     });
-//   } else {
-//     res.status(401).json({ message: 'Invalid credentials' });
-//   }
-// };
-
 export const loginUser = async (req, res) => {
   try {
     const { phone, password } = req.body;
@@ -43,7 +27,6 @@ export const loginUser = async (req, res) => {
       console.log('Incorrect Password!');
       return res.status(401).json({ message: 'Invalid credentials' });
     }
-
     const token = generateToken(user._id);
 
     console.log('Login Successful! Token Generated:', token);
@@ -54,6 +37,7 @@ export const loginUser = async (req, res) => {
       phone: user.phone,
       userType: user.userType,
       token,
+      // user,
     });
   } catch (error) {
     console.error('Login Error:', error);
@@ -62,10 +46,41 @@ export const loginUser = async (req, res) => {
 };
 
 export const verifyPin = async (req, res) => {
-  const { phone, pin } = req.body;
-  const user = await User.findOne({ phone });
-  if (user && user.userType === 'staff' && (await user.matchPin(pin))) {
-    res.json({
+  try {
+    const user = req.user;
+    const { pin } = req.body;
+    // console.log(pin);
+
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: 'Not authorized, please log in!' });
+    }
+    // console.log(user);
+
+    if (user.userType !== 'staff') {
+      return res.status(403).json({ message: 'Only staff can verify PIN' });
+    }
+
+    // 🔴🔴
+    console.log('User details:', user);
+    console.log('Entered PIN:', pin);
+    console.log('Stored Hashed PIN:', user.pin);
+
+    if (!user.pin) {
+      return res.status(400).json({ message: 'PIN not set for this user' });
+    }
+    if (!pin) {
+      return res.status(400).json({ message: 'Please provide a PIN' });
+    }
+
+    // verify the PIN
+    const isMatch = await user.matchPin(pin);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid PIN' });
+    }
+
+    res.status(200).json({
       id: user._id,
       name: user.name,
       phone: user.phone,
@@ -73,8 +88,9 @@ export const verifyPin = async (req, res) => {
       verified: true,
       token: generateToken(user._id),
     });
-  } else {
-    res.status(401).json({ message: 'Invalid pin' });
+  } catch (error) {
+    console.error('Error verifying PIN:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
