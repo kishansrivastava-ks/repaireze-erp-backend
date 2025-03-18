@@ -13,6 +13,28 @@ export const getCustomers = async (req, res) => {
   }
 };
 
+export const searchCustomers = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+
+    // Find customers whose name or mobile number matches the query
+    const customers = await Customer.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } }, // Case-insensitive name search
+        { mobile: { $regex: query, $options: 'i' } }, // Case-insensitive mobile search
+      ],
+    });
+
+    res.status(200).json(customers);
+  } catch (error) {
+    res.status(500).json({ message: 'Error searching customers' });
+  }
+};
+
 // Add a customer
 export const addCustomer = async (req, res) => {
   try {
