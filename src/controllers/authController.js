@@ -37,6 +37,9 @@ export const loginUser = async (req, res) => {
       phone: user.phone,
       userType: user.userType,
       token,
+      satffRole: user.staffRole,
+      address: user.address,
+
       // user,
     });
   } catch (error) {

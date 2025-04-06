@@ -35,6 +35,32 @@ export const searchCustomers = async (req, res) => {
   }
 };
 
+export const searchVendors = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({
+        message: 'Vendor name/mobile required to search',
+      });
+    }
+
+    const vendors = await Vendor.find({
+      $or: [
+        {
+          name: { $regex: query, $options: 'i' },
+        },
+        {
+          mobile: { $regex: query, $options: 'i' },
+        },
+      ],
+    });
+
+    res.status(200).json(vendors);
+  } catch (error) {
+    res.status(500).json({ message: 'Error searching vendors' });
+  }
+};
+
 // Add a customer
 export const addCustomer = async (req, res) => {
   try {
