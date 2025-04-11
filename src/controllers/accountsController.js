@@ -70,22 +70,35 @@ export const addPayable = async (req, res) => {
       invoiceNumber,
     } = req.body;
 
+    console.log(
+      vendorId,
+      serviceType,
+      paymentAmount,
+      paymentStatus,
+      invoiceNumber,
+    );
+
     if (!vendorId || !serviceType || !paymentAmount || !paymentStatus)
       return res.status(400).json({
         message: 'All fields are required',
       });
 
-    if (paymentStatus === 'done' && (!amount || !invoiceNumber))
+    if (paymentStatus === 'done' && (!paymentAmount || !invoiceNumber)) {
       return res.status(400).json({
         message:
           'Amount and Invoice Number are required when payment status is done',
       });
+    }
 
+    console.log('finding vendor');
     const vendor = await Vendor.findById(vendorId);
     if (!vendor)
       return res.status(404).json({
         message: 'Vendor not found',
       });
+
+    console.log('vendor found', vendor);
+    console.log('creating payable');
 
     const newPayable = new Payable({
       vendorId,
