@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     userType: { type: String, enum: ['admin', 'staff'], required: true },
     staffRole: {
       type: String,
-      enum: ['technician', 'customer-support', 'field-agent'],
+      // enum: ['technician', 'customer-support', 'field-agent'],
       // default: 'technician',
     },
     password: { type: String, required: true },

@@ -116,3 +116,17 @@ export const addStaff = async (req, res) => {
   });
   res.status(201).json({ message: 'Staff created successfully', staff });
 };
+
+// delete a staff
+export const deleteStaff = async (req, res) => {
+  try {
+    const id = req.params.id;
+    await User.findByIdAndDelete(id);
+    res.status(200).json({ message: 'Staff deleted successfully' });
+  } catch (error) {
+    res.status(500).json({
+      error: error,
+      message: 'Error deleting staff',
+    });
+  }
+};

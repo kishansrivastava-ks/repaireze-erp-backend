@@ -117,6 +117,26 @@ export const addService = async (req, res) => {
   }
 };
 
+// edit a service
+export const editService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedService = await Service.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
+    if (!updatedService) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    res.json(updatedService);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating service' });
+  }
+};
+
 // Get all vendors
 export const getVendors = async (req, res) => {
   try {
