@@ -2,6 +2,9 @@ import Customer from '../models/Customer.js';
 import Service from '../models/Service.js';
 import Vendor from '../models/Vendor.js';
 import User from '../models/User.js';
+import Verification from '../models/Verification.js';
+
+import sendMail from '../services/emailService.js';
 
 // Get all customers
 export const getCustomers = async (req, res) => {
@@ -64,9 +67,13 @@ export const searchVendors = async (req, res) => {
 // Add a customer
 export const addCustomer = async (req, res) => {
   try {
+    console.log('adding new customer');
     const { name, mobile, gstNumber, dob, address } = req.body;
+    console.log(name, mobile, gstNumber, dob, address);
     const newCustomer = new Customer({ name, mobile, gstNumber, dob, address });
+    console.log('new customer created');
     await newCustomer.save();
+    console.log('new customer saved');
     res.status(201).json(newCustomer);
   } catch (error) {
     res.status(400).json({ message: 'Error adding customer' });
@@ -203,5 +210,68 @@ export const editVendor = async (req, res) => {
     });
   } catch (error) {
     res.status(400).json({ message: 'Error updating vendor' });
+  }
+};
+
+export const requestVendorDeletion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const vendor = await Vendor.findById(id);
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+
+    // save otp in database
+    await Verification.create({
+      vendorId: id,
+      otp,
+      expiresAt,
+    });
+
+    // send otp via mail
+    await sendMail({
+      to: 'kishansrivastava.01.ks@gmail.com',
+      subject: 'OTP for Vendor Deletion',
+      text: `Your OTP for deleting vendor ${vendor.name} is: ${otp}. This will expire in 10 minutes.`,
+    });
+
+    res.status(200).json({ message: 'Otp sent to email successfully' });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: 'Error requesting vendor deletion', error: error });
+  }
+};
+
+export const verifyVendorDeletion = async (req, res) => {
+  try {
+    const { vendorId, otp } = req.body;
+    const verification = await Verification.findOne({ vendorId, otp });
+
+    if (!verification) {
+      return res.status(404).json({ message: 'Invalid OTP' });
+    }
+
+    if (verification.expiresAt < new Date()) {
+      await Verification.deleteOne({ _id: verification._id });
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    // delete vendor
+    const deletedVendor = await Vendor.findByIdAndDelete(vendorId);
+    if (!deletedVendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    // delete verification record
+    await Verification.deleteOne({ _id: verification._id });
+
+    res.status(200).json({ message: 'Vendor deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ message: 'Error verifying vendor deletion' });
   }
 };
