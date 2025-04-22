@@ -6,7 +6,7 @@ const customerSchema = new mongoose.Schema(
     mobile: { type: String, required: true, unique: true },
     gstNumber: { type: String },
     dob: { type: Date },
-    address: { type: String, required: true },
+    address: { type: String },
   },
   { timestamps: true },
 );
