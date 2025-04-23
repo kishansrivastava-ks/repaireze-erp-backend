@@ -29,6 +29,7 @@ const leadSchema = new mongoose.Schema(
     secondCall: {
       type: String,
       enum: ['yes', 'no'],
+      default: 'no',
     },
     m1: {
       type: Boolean,

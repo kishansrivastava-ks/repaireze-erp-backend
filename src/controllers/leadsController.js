@@ -120,3 +120,31 @@ export const passToCustomer = async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+// get all leads
+export const getAllLeads = async (req, res) => {
+  try {
+    const leads = await Lead.find({}).sort({ createdAt: -1 });
+    res.status(200).json({
+      results: leads.length,
+      leads,
+    });
+  } catch (error) {
+    console.error('Error fetching leads:', error);
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+// get a lead by ID
+export const getLeadById = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const lead = await Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: 'Lead not found' });
+    }
+    res.status(200).json(lead);
+  } catch (error) {
+    console.error('Error fetching lead:', error);
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
