@@ -69,6 +69,14 @@ export const moveLead = async (req, res) => {
       [`${moveTo}Remarks`]: remarks || null,
     };
 
+    const otherFields = ['m1', 'm2', 'loh', 'converted', 'passedToCustomer'];
+    otherFields.forEach((field) => {
+      if (field !== moveTo) {
+        updateData[field] = false;
+        updateData[`${field}Remarks`] = null;
+      }
+    });
+
     const updatedLead = await Lead.findByIdAndUpdate(leadId, updateData, {
       new: true,
     });
@@ -145,6 +153,26 @@ export const getLeadById = async (req, res) => {
     res.status(200).json(lead);
   } catch (error) {
     console.error('Error fetching lead:', error);
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+export const getLeadsByType = async (req, res) => {
+  try {
+    const { type } = req.params;
+    const validTypes = ['m1', 'm2', 'loh', 'converted', 'passedToCustomer'];
+
+    if (!validTypes.includes(type)) {
+      return res.status(400).json({ message: 'Invalid lead type' });
+    }
+
+    const leads = await Lead.find({ [type]: true }).sort({ createdAt: -1 });
+    res.status(200).json({
+      results: leads.length,
+      leads,
+    });
+  } catch (error) {
+    console.error('Error fetching leads by type:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
