@@ -176,3 +176,57 @@ export const getLeadsByType = async (req, res) => {
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
+// controller to edit a lead
+export const editLead = async (req, res) => {
+  try {
+    const { leadId } = req.params;
+    const {
+      customerName,
+      customerMobile,
+      city,
+      pinCode,
+      email,
+      firstCall,
+      secondCall,
+    } = req.body;
+
+    if (!leadId) {
+      return res.status(400).json({ message: 'Lead ID is required' });
+    }
+
+    // the allowed fields to update can include name, number, city, pin code, email, first call, second call only
+    const allowedFields = [
+      'customerName',
+      'customerMobile',
+      'city',
+      'pinCode',
+      'email',
+      'firstCall',
+      'secondCall',
+    ];
+    const updateData = {};
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updateData[field] = req.body[field];
+      }
+    });
+
+    const lead = await Lead.findById(leadId);
+    if (!lead) {
+      return res.status(404).json({ message: 'Lead not found' });
+    }
+
+    const updatedLead = await Lead.findByIdAndUpdate(leadId, updateData, {
+      new: true,
+    });
+
+    res.status(200).json({
+      message: 'Lead updated successfully',
+      updatedLead,
+    });
+  } catch (error) {
+    console.error('Error updating lead:', error);
+    res.status(500).json({ message: 'Server error', error });
+  }
+};

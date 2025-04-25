@@ -67,13 +67,20 @@ export const searchVendors = async (req, res) => {
 // Add a customer
 export const addCustomer = async (req, res) => {
   try {
-    console.log('adding new customer');
     const { name, mobile, gstNumber, dob, address } = req.body;
-    console.log(name, mobile, gstNumber, dob, address);
+    // check if the custoemr with the mobile number already exists
+    const existingCustomer = await Customer.findOne({ mobile });
+    if (existingCustomer) {
+      console.log('customer exits');
+      return res.status(400).json({
+        message: 'Customer with this mobile number already exists',
+      });
+    }
+
     const newCustomer = new Customer({ name, mobile, gstNumber, dob, address });
-    console.log('new customer created');
+
     await newCustomer.save();
-    console.log('new customer saved');
+
     res.status(201).json(newCustomer);
   } catch (error) {
     res.status(400).json({ message: 'Error adding customer' });
