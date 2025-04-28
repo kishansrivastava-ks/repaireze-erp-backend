@@ -282,3 +282,129 @@ export const verifyVendorDeletion = async (req, res) => {
     res.status(400).json({ message: 'Error verifying vendor deletion' });
   }
 };
+
+export const requestCustomerDeletion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const customer = await Customer.findById(id);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+
+    // save otp in database
+    await Verification.create({
+      customerId: id,
+      otp,
+      expiresAt,
+    });
+
+    // send otp via mail
+    await sendMail({
+      to: 'kishansrivastava.01.ks@gmail.com',
+      subject: 'OTP for Customer Deletion',
+      text: `Your OTP for deleting customer ${customer.name} is: ${otp}. This will expire in 10 minutes.`,
+    });
+
+    res.status(200).json({ message: 'Otp sent to email successfully' });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: 'Error requesting customer deletion', error: error });
+  }
+};
+
+export const verifyCustomerDeletion = async (req, res) => {
+  try {
+    const { customerId, otp } = req.body;
+    const verification = await Verification.findOne({ customerId, otp });
+
+    if (!verification) {
+      return res.status(404).json({ message: 'Invalid OTP' });
+    }
+
+    if (verification.expiresAt < new Date()) {
+      await Verification.deleteOne({ _id: verification._id });
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    // delete vendor
+    const deletedCustomer = await Customer.findByIdAndDelete(customerId);
+    if (!deletedCustomer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    // delete verification record
+    await Verification.deleteOne({ _id: verification._id });
+
+    res.status(200).json({ message: 'Customer deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ message: 'Error verifying customer deletion' });
+  }
+};
+
+export const requestServiceDeletion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const service = await Service.findById(id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+
+    // save otp in database
+    await Verification.create({
+      serviceId: id,
+      otp,
+      expiresAt,
+    });
+
+    // send otp via mail
+    await sendMail({
+      to: 'kishansrivastava.01.ks@gmail.com',
+      subject: 'OTP for Service Deletion',
+      text: `Your OTP for deleting ${service.serviceType} service for ${service.customerName} is: ${otp}. This will expire in 10 minutes.`,
+    });
+
+    res.status(200).json({ message: 'Otp sent to email successfully' });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: 'Error requesting service deletion', error: error });
+  }
+};
+
+export const verifyServiceDeletion = async (req, res) => {
+  try {
+    const { serviceId, otp } = req.body;
+    const verification = await Verification.findOne({ serviceId, otp });
+
+    if (!verification) {
+      return res.status(404).json({ message: 'Invalid OTP' });
+    }
+
+    if (verification.expiresAt < new Date()) {
+      await Verification.deleteOne({ _id: verification._id });
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    // delete vendor
+    const deletedService = await Service.findByIdAndDelete(serviceId);
+    if (!deletedService) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+
+    // delete verification record
+    await Verification.deleteOne({ _id: verification._id });
+
+    res.status(200).json({ message: 'Service deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ message: 'Error verifying service deletion' });
+  }
+};
