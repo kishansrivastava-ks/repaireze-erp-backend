@@ -153,3 +153,83 @@ export const getAllPayables = async (req, res) => {
     });
   }
 };
+
+// controller for editing a receivable, the editable fields for a particular receivable are serviceType, paymentType, amount, paymentStatus, invoiceNumber
+export const editReceivable = async (req, res) => {
+  try {
+    const { receivableId } = req.params;
+    const { serviceType, paymentType, amount, paymentStatus, invoiceNumber } =
+      req.body;
+
+    if (
+      !serviceType &&
+      !paymentType &&
+      !amount &&
+      !paymentStatus &&
+      !invoiceNumber
+    )
+      return res.status(400).json({
+        message: 'At least one field is required',
+      });
+
+    const receivable = await Receivables.findById(receivableId);
+    if (!receivable) {
+      return res.status(404).json({
+        message: 'No receivable found with that id',
+      });
+    }
+
+    if (serviceType) receivable.serviceType = serviceType;
+    if (paymentType) receivable.paymentType = paymentType;
+    if (amount) receivable.amount = amount;
+    if (paymentStatus) receivable.paymentStatus = paymentStatus;
+    if (invoiceNumber) receivable.invoiceNumber = invoiceNumber;
+
+    await receivable.save();
+    res.status(200).json({
+      message: 'Receivable updated successfully',
+      receivable,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error updating receivable',
+      error,
+    });
+  }
+};
+
+export const editPayable = async (req, res) => {
+  try {
+    const { payableId } = req.params;
+    const { serviceType, paymentAmount, paymentStatus, invoiceNumber } =
+      req.body;
+
+    if (!serviceType && !paymentAmount && !paymentStatus && !invoiceNumber)
+      return res.status(400).json({
+        message: 'At least one field is required',
+      });
+
+    const payable = await Payable.findById(payableId);
+    if (!payable) {
+      return res.status(404).json({
+        message: 'No payable found with that id',
+      });
+    }
+
+    if (serviceType) payable.serviceType = serviceType;
+    if (paymentAmount) payable.paymentAmount = paymentAmount;
+    if (paymentStatus) payable.paymentStatus = paymentStatus;
+    if (invoiceNumber) payable.invoiceNumber = invoiceNumber;
+
+    await payable.save();
+    res.status(200).json({
+      message: 'Payable updated successfully',
+      payable,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error updating payable',
+      error,
+    });
+  }
+};
