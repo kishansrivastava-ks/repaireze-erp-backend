@@ -5,6 +5,8 @@ import User from '../models/User.js';
 import Verification from '../models/Verification.js';
 
 import sendMail from '../services/emailService.js';
+import CustomerB2B from '../models/CustomerB2B.js';
+import B2B_Service from '../models/B2B_Service.js';
 
 // Get all customers
 export const getCustomers = async (req, res) => {
@@ -129,7 +131,7 @@ export const addService = async (req, res) => {
     const { customerId, serviceType, status, scheduledDate, payment } =
       req.body;
     const userId = req.user.id;
-    console.log(userId);
+    // console.log(userId);
     const customer = await Customer.findById(customerId);
     if (!customer)
       return res.status(404).json({ message: 'Customer not found' });
@@ -406,5 +408,158 @@ export const verifyServiceDeletion = async (req, res) => {
     res.status(200).json({ message: 'Service deleted successfully' });
   } catch (error) {
     res.status(400).json({ message: 'Error verifying service deletion' });
+  }
+};
+
+// b2b customer
+export const addB2BCustomer = async (req, res) => {
+  try {
+    const {
+      businessName,
+      businessContact,
+      representativeName,
+      representativeContact,
+      address,
+      siteVisitDone,
+      reasonForNo,
+      servicesRequired = [],
+    } = req.body;
+
+    if (
+      !businessName?.trim() ||
+      !businessContact?.trim() ||
+      !representativeName?.trim() ||
+      !representativeContact?.trim() ||
+      !address?.trim() ||
+      siteVisitDone === undefined
+    ) {
+      return res.status(400).json({
+        message: 'All fields are required!',
+      });
+    }
+
+    // check existing cutomer
+    const existingCustomer = await CustomerB2B.findOne({
+      businessName,
+      businessContact,
+    });
+
+    if (existingCustomer) {
+      return res.status(409).json({
+        message:
+          'Customer with this business name and contact number already exists!',
+      });
+    }
+
+    // create new customer
+    const newB2BCustomer = new CustomerB2B({
+      businessName,
+      businessContact,
+      representativeName,
+      representativeContact,
+      address,
+      siteVisitDone,
+    });
+
+    if (!siteVisitDone) {
+      if (!reasonForNo?.trim()) {
+        return res.status(400).json({
+          message: 'You must specify a reason for not visiting site !',
+        });
+      }
+      newB2BCustomer.reasonForNo = reasonForNo;
+    } else {
+      if (!Array.isArray(servicesRequired) || servicesRequired.length === 0) {
+        return res.status(400).json({
+          message:
+            'Please specify at least one service the business requires !',
+        });
+      }
+      newB2BCustomer.servicesRequired = servicesRequired;
+    }
+
+    await newB2BCustomer.save();
+
+    res.status(201).json({
+      message: 'New B2B customer created successfully',
+      customer: newB2BCustomer,
+    });
+  } catch (error) {
+    console.error('Error adding b2b customer', error);
+    res.status(500).json({
+      message: 'Error adding new B2B customer',
+      error,
+    });
+  }
+};
+
+export const addB2BService = async (req, res) => {
+  try {
+    const { customerId, services, serviceStatus, payment, date } = req.body;
+
+    if (!customerId || !Array.isArray(services) || !serviceStatus || !payment) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (payment.isPaid && (!payment.amount || payment.amount <= 0)) {
+      return res
+        .status(400)
+        .json({ message: 'Amount is required when payment is done!' });
+    }
+
+    const customer = await CustomerB2B.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const newB2bService = new B2B_Service({
+      customerId,
+      businessName: customer.businessName,
+      businessContact: customer.businessContact,
+      representativeName: customer.representativeName,
+      representativeContact: customer.representativeContact,
+      services,
+      serviceStatus,
+      payment,
+      date: serviceStatus === 'ongoing' ? new Date() : date || null,
+    });
+
+    await newB2bService.save();
+    return res.status(201).json({
+      message: 'New B2B service created!',
+      service: newB2bService,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Error adding new B2B Service!',
+      error,
+    });
+  }
+};
+
+export const getB2BServices = async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    const filter = status ? { serviceStatus: status } : {};
+
+    const services = await B2B_Service.find(filter).populate(
+      'customerId',
+      'businessName businessContact',
+    );
+
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getB2BCustomers = async (req, res) => {
+  try {
+    const customers = await CustomerB2B.find().sort({ dateOfAddition: -1 });
+
+    res.json(customers);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
   }
 };

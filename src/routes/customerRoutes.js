@@ -1,6 +1,7 @@
 import express from 'express';
 import { protect } from '../middlewares/authMiddleware.js';
 import {
+  addB2BCustomer,
   addCustomer,
   editCustomer,
   getCustomers,
@@ -18,5 +19,8 @@ router.patch('/:id/update', protect, editCustomer);
 
 router.post('/request-delete/:id', protect, requestCustomerDeletion);
 router.post('/verify-delete', protect, verifyCustomerDeletion);
+
+// for b2b customers
+router.post('/b2b/add', protect, addB2BCustomer);
 
 export default router;
