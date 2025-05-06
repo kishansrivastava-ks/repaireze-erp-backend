@@ -243,7 +243,7 @@ export const requestVendorDeletion = async (req, res) => {
 
     // send otp via mail
     await sendMail({
-      to: 'kishansrivastava.01.ks@gmail.com',
+      to: 'kishan.repaireze@gmail.com',
       subject: 'OTP for Vendor Deletion',
       text: `Your OTP for deleting vendor ${vendor.name} is: ${otp}. This will expire in 10 minutes.`,
     });
@@ -306,7 +306,7 @@ export const requestCustomerDeletion = async (req, res) => {
 
     // send otp via mail
     await sendMail({
-      to: 'kishansrivastava.01.ks@gmail.com',
+      to: 'kishan.repaireze@gmail.com',
       subject: 'OTP for Customer Deletion',
       text: `Your OTP for deleting customer ${customer.name} is: ${otp}. This will expire in 10 minutes.`,
     });
@@ -369,7 +369,7 @@ export const requestServiceDeletion = async (req, res) => {
 
     // send otp via mail
     await sendMail({
-      to: 'kishansrivastava.01.ks@gmail.com',
+      to: 'kishan.repaireze@gmail.com',
       subject: 'OTP for Service Deletion',
       text: `Your OTP for deleting ${service.serviceType} service for ${service.customerName} is: ${otp}. This will expire in 10 minutes.`,
     });
