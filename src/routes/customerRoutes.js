@@ -4,6 +4,7 @@ import {
   addB2BCustomer,
   addCustomer,
   editCustomer,
+  getB2BCustomers,
   getCustomers,
   requestCustomerDeletion,
   searchCustomers,
@@ -21,6 +22,7 @@ router.post('/request-delete/:id', protect, requestCustomerDeletion);
 router.post('/verify-delete', protect, verifyCustomerDeletion);
 
 // for b2b customers
+router.get('/b2b', protect, getB2BCustomers);
 router.post('/b2b/add', protect, addB2BCustomer);
 
 export default router;
