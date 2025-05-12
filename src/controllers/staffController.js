@@ -357,7 +357,7 @@ export const verifyCustomerDeletion = async (req, res) => {
       return res.status(400).json({ message: 'OTP expired' });
     }
 
-    // delete vendor
+    // delete customer
     const deletedCustomer = await Customer.findByIdAndDelete(customerId);
     if (!deletedCustomer) {
       return res.status(404).json({ message: 'Customer not found' });
@@ -434,6 +434,7 @@ export const verifyServiceDeletion = async (req, res) => {
     res.status(400).json({ message: 'Error verifying service deletion' });
   }
 };
+// test
 
 // b2b customer
 export const addB2BCustomer = async (req, res) => {
@@ -517,6 +518,117 @@ export const addB2BCustomer = async (req, res) => {
   }
 };
 
+export const getB2BCustomers = async (req, res) => {
+  try {
+    const customers = await CustomerB2B.find().sort({ dateOfAddition: -1 });
+
+    res.json(customers);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+export const editB2BCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedCustomer = await CustomerB2B.findByIdAndUpdate(
+      id,
+      updateData,
+      {
+        new: true,
+      },
+    );
+
+    if (!updatedCustomer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    res.status(200).json({
+      message: 'Customer updated successfully',
+      customer: updatedCustomer,
+    });
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating customer' });
+  }
+};
+
+export const requestB2BCustomerDeletion = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const customer = await CustomerB2B.findById(id);
+    if (!customer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+    // save otp in database
+    await Verification.create({
+      customerId: id,
+      otp,
+      expiresAt,
+    });
+    // send otp via mail
+    await sendMail({
+      to: 'kishan.repaireze@gmail.com',
+      subject: 'OTP for B2B Customer Deletion',
+      text: `Your OTP for deleting b2b customer ${customer.businessName} is: ${otp}. This will expire in 10 minutes.`,
+    });
+
+    res.status(200).json({ message: 'Otp sent to email successfully' });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: 'Error requesting customer deletion', error: error });
+  }
+};
+
+export const verifyB2BCustomerDeletion = async (req, res) => {
+  try {
+    const { customerId, otp } = req.body;
+    const verification = await Verification.findOne({ customerId, otp });
+
+    if (!verification) {
+      return res.status(404).json({ message: 'Invalid OTP' });
+    }
+    if (verification.expiresAt < new Date()) {
+      await Verification.deleteOne({ _id: verification._id });
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+
+    // delete customer
+    const deletedCustomer = await CustomerB2B.findByIdAndDelete(customerId);
+    if (!deletedCustomer) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+    // delete verification record
+    await Verification.deleteOne({ _id: verification._id });
+    res.status(200).json({ message: 'Customer deleted successfully' });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: 'Error verifying customer deletion', error: error });
+  }
+};
+
+// b2b service
+export const getB2BServices = async (req, res) => {
+  try {
+    const { status } = req.query;
+
+    const filter = status ? { serviceStatus: status } : {};
+
+    const services = await B2B_Service.find(filter).populate(
+      'customerId',
+      'businessName businessContact',
+    );
+
+    res.json(services);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const addB2BService = async (req, res) => {
   try {
     const { customerId, services, serviceStatus, payment, date } = req.body;
@@ -560,30 +672,78 @@ export const addB2BService = async (req, res) => {
     });
   }
 };
-
-export const getB2BServices = async (req, res) => {
+export const requestB2BServiceDeletion = async (req, res) => {
   try {
-    const { status } = req.query;
-
-    const filter = status ? { serviceStatus: status } : {};
-
-    const services = await B2B_Service.find(filter).populate(
-      'customerId',
-      'businessName businessContact',
-    );
-
-    res.json(services);
+    const { id } = req.params;
+    const service = await B2B_Service.findById(id);
+    if (!service) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    // generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // OTP valid for 10 minutes
+    // save otp in database
+    await Verification.create({
+      serviceId: id,
+      otp,
+      expiresAt,
+    });
+    // send otp via mail
+    await sendMail({
+      to: 'kishan.repaireze@gmail.com',
+      subject: 'OTP for B2B Service Deletion',
+      text: `Your OTP for deleting b2b services ${service.services.map((service) => `${service} `)} for ${service.businessName} is: ${otp}. This will expire in 10 minutes.`,
+    });
+    res.status(200).json({ message: 'Otp sent to email successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res
+      .status(400)
+      .json({ message: 'Error requesting service deletion', error: error });
   }
 };
-
-export const getB2BCustomers = async (req, res) => {
+export const verifyB2BServiceDeletion = async (req, res) => {
   try {
-    const customers = await CustomerB2B.find().sort({ dateOfAddition: -1 });
-
-    res.json(customers);
+    const { serviceId, otp } = req.body;
+    const verification = await Verification.findOne({ serviceId, otp });
+    if (!verification) {
+      return res.status(404).json({ message: 'Invalid OTP' });
+    }
+    if (verification.expiresAt < new Date()) {
+      await Verification.deleteOne({ _id: verification._id });
+      return res.status(400).json({ message: 'OTP expired' });
+    }
+    // delete vendor
+    const deletedService = await B2B_Service.findByIdAndDelete(serviceId);
+    if (!deletedService) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    // delete verification record
+    await Verification.deleteOne({ _id: verification._id });
+    res.status(200).json({ message: 'Service deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    res
+      .status(400)
+      .json({ message: 'Error verifying service deletion', error: error });
+  }
+};
+// edit b2b service
+export const editB2BService = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const updatedService = await B2B_Service.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
+
+    if (!updatedService) {
+      return res.status(404).json({ message: 'Service not found' });
+    }
+    res.status(200).json({
+      message: 'Service updated successfully',
+      service: updatedService,
+    });
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating service' });
   }
 };
