@@ -40,6 +40,28 @@ export const searchCustomers = async (req, res) => {
   }
 };
 
+export const searchB2bCustomer = async (req, res) => {
+  try {
+    const { query } = req.query;
+
+    if (!query) {
+      return res.status(400).json({ message: 'Search query is required' });
+    }
+
+    // Find customers whose name or mobile number matches the query
+    const customers = await CustomerB2B.find({
+      $or: [
+        { businessName: { $regex: query, $options: 'i' } }, // Case-insensitive name search
+        { businessContact: { $regex: query, $options: 'i' } }, // Case-insensitive mobile search
+      ],
+    });
+
+    res.status(200).json(customers);
+  } catch (error) {
+    res.status(500).json({ message: 'Error searching B2B customers' });
+  }
+};
+
 export const searchVendors = async (req, res) => {
   try {
     const { query } = req.query;
@@ -187,13 +209,15 @@ export const getVendors = async (req, res) => {
 // Add a vendor
 export const addVendor = async (req, res) => {
   try {
-    const { name, mobile, category, address, alternateMobile } = req.body;
+    const { name, mobile, category, address, alternateMobile, kyc_status } =
+      req.body;
     const newVendor = new Vendor({
       name,
       mobile,
       category,
       address,
       alternateMobile,
+      kyc_status,
     });
     await newVendor.save();
     res.status(201).json(newVendor);

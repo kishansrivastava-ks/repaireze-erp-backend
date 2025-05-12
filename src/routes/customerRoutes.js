@@ -7,6 +7,7 @@ import {
   getB2BCustomers,
   getCustomers,
   requestCustomerDeletion,
+  searchB2bCustomer,
   searchCustomers,
   verifyCustomerDeletion,
 } from '../controllers/staffController.js';
@@ -16,6 +17,7 @@ const router = express.Router();
 router.get('/', protect, getCustomers);
 router.post('/add', protect, addCustomer);
 router.get('/search', protect, searchCustomers);
+router.get('/search/b2b', protect, searchB2bCustomer);
 router.patch('/:id/update', protect, editCustomer);
 
 router.post('/request-delete/:id', protect, requestCustomerDeletion);
