@@ -2,6 +2,8 @@ import Customer from '../models/Customer.js';
 import Vendor from '../models/Vendor.js';
 import Payable from '../models/Payables.js';
 import Receivables from '../models/Receivables.js';
+import Verification from '../models/Verification.js';
+import sendMail from '../services/emailService.js';
 
 export const addReceivable = async (req, res) => {
   try {
@@ -229,6 +231,77 @@ export const editPayable = async (req, res) => {
   } catch (error) {
     res.status(500).json({
       message: 'Error updating payable',
+      error,
+    });
+  }
+};
+
+export const requestPayableStatusChange = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const payable = await Payable.findById(id);
+    if (!payable) {
+      return res.status(404).json({
+        message: 'No payable found with that id',
+      });
+    }
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await Verification.create({
+      payableId: id,
+      otp,
+      expiresAt,
+    });
+
+    await sendMail({
+      to: 'kishan.repaireze@gmail.com',
+      subject: 'OTP for Payable Status Change',
+      text: `Your OTP for changing the status of payable ${payable.serviceType} for ${payable.vendorName} from ${payable.payableStatus} to ${status} is: ${otp}. This will expire in 10 minutes.`,
+    });
+
+    res.status(200).json({
+      message: 'OTP sent successfully',
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error requesting payable status change',
+      error,
+    });
+  }
+};
+
+export const verifyPayableStatusChange = async (req, res) => {
+  try {
+    const { id, otp, status } = req.body;
+    const verification = await Verification.findOne({
+      payableId: id,
+      otp,
+    });
+    if (!verification) {
+      return res.status(400).json({
+        message: 'Invalid OTP',
+      });
+    }
+    if (verification.expiresAt < new Date()) {
+      return res.status(400).json({
+        message: 'OTP has expired',
+      });
+    }
+    const payable = await Payable.findByIdAndUpdate(
+      id,
+      { payableStatus: status },
+      { new: true },
+    );
+    await Verification.deleteOne({ _id: verification._id });
+    res.status(200).json({
+      message: `Payable status changed to ${status} successfully`,
+      payable,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: 'Error verifying payable status change',
       error,
     });
   }

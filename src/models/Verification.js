@@ -14,6 +14,10 @@ const verificationSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Service',
   },
+  payableId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Payable',
+  },
   otp: {
     type: String,
     required: true,

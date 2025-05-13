@@ -28,6 +28,12 @@ const payableSchema = new mongoose.Schema(
       required: true,
       enum: ['done', 'pending'],
     },
+    payableStatus: {
+      type: String,
+      required: true,
+      enum: ['pending', 'approved', 'on hold'],
+      default: 'pending',
+    },
     invoiceNumber: {
       type: String,
       default: '',

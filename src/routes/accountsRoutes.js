@@ -7,6 +7,8 @@ import {
   editReceivable,
   getAllPayables,
   getAllReceivables,
+  requestPayableStatusChange,
+  verifyPayableStatusChange,
 } from '../controllers/accountsController.js';
 
 const router = express.Router();
@@ -19,5 +21,16 @@ router.get('/receivables', protect, getAllReceivables);
 
 router.patch('/receivables/:receivableId', protect, editReceivable);
 router.patch('/payables/:payableId', protect, editPayable);
+
+router.post(
+  '/payables/:id/payable-status/edit',
+  protect,
+  requestPayableStatusChange,
+);
+router.post(
+  '/payables/payable-status/verify',
+  protect,
+  verifyPayableStatusChange,
+);
 
 export default router;
