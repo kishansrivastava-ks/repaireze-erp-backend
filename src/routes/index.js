@@ -8,6 +8,7 @@ import vendorRoutes from './vendorRoutes.js';
 import marketingRoutes from './marketingRoutes.js';
 import accountRoutes from './accountsRoutes.js';
 import leadRoutes from './leadRoutes.js';
+// import fileUploadRoutes from './fileUploadRoutes.js';
 
 const router = express.Router();
 
@@ -20,5 +21,6 @@ router.use('/vendors', vendorRoutes);
 router.use('/marketing', marketingRoutes);
 router.use('/accounts', accountRoutes);
 router.use('/leads', leadRoutes);
+// router.use('/files', fileUploadRoutes);
 
 export default router;

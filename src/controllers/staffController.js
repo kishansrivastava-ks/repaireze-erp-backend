@@ -267,7 +267,7 @@ export const requestVendorDeletion = async (req, res) => {
 
     // send otp via mail
     await sendMail({
-      to: 'kishan.repaireze@gmail.com',
+      to: 'mendt.otp@rprb2b.com',
       subject: 'OTP for Vendor Deletion',
       text: `Your OTP for deleting vendor ${vendor.name} is: ${otp}. This will expire in 10 minutes.`,
     });
@@ -330,7 +330,7 @@ export const requestCustomerDeletion = async (req, res) => {
 
     // send otp via mail
     await sendMail({
-      to: 'kishan.repaireze@gmail.com',
+      to: 'mendt.otp@rprb2b.com',
       subject: 'OTP for Customer Deletion',
       text: `Your OTP for deleting customer ${customer.name} is: ${otp}. This will expire in 10 minutes.`,
     });
@@ -393,7 +393,7 @@ export const requestServiceDeletion = async (req, res) => {
 
     // send otp via mail
     await sendMail({
-      to: 'kishan.repaireze@gmail.com',
+      to: 'mendt.otp@rprb2b.com',
       subject: 'OTP for Service Deletion',
       text: `Your OTP for deleting ${service.serviceType} service for ${service.customerName} is: ${otp}. This will expire in 10 minutes.`,
     });
@@ -570,7 +570,7 @@ export const requestB2BCustomerDeletion = async (req, res) => {
     });
     // send otp via mail
     await sendMail({
-      to: 'kishan.repaireze@gmail.com',
+      to: 'mendt.otp@rprb2b.com',
       subject: 'OTP for B2B Customer Deletion',
       text: `Your OTP for deleting b2b customer ${customer.businessName} is: ${otp}. This will expire in 10 minutes.`,
     });
@@ -690,7 +690,7 @@ export const requestB2BServiceDeletion = async (req, res) => {
     });
     // send otp via mail
     await sendMail({
-      to: 'kishan.repaireze@gmail.com',
+      to: 'mendt.otp@rprb2b.com',
       subject: 'OTP for B2B Service Deletion',
       text: `Your OTP for deleting b2b services ${service.services.map((service) => `${service} `)} for ${service.businessName} is: ${otp}. This will expire in 10 minutes.`,
     });
