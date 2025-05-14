@@ -256,7 +256,7 @@ export const requestPayableStatusChange = async (req, res) => {
     });
 
     await sendMail({
-      to: 'kishan.repaireze@gmail.com',
+      to: 'lalit.k@rprb2b.com',
       subject: 'OTP for Payable Status Change',
       text: `Your OTP for changing the status of payable ${payable.serviceType} for ${payable.vendorName} from ${payable.payableStatus} to ${status} is: ${otp}. This will expire in 10 minutes.`,
     });
