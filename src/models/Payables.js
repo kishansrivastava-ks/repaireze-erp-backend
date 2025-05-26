@@ -38,6 +38,10 @@ const payableSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    qrCodeImage: {
+      type: String, // Will store the Base64 string of the image
+      default: '',
+    },
   },
   { timestamps: true },
 );

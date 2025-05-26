@@ -68,44 +68,44 @@ app.use(compression());
 app.use(express.static('public')); // Serve static files from the uploads directory
 app.use('/uploads', express.static(uploadsDir)); // Serve static files from the uploads directory
 
-app.post(
-  '/api/customers/:customerId/files',
-  upload.single('file'),
-  async (req, res) => {
-    try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
+// app.post(
+//   '/api/customers/:customerId/files',
+//   upload.single('file'),
+//   async (req, res) => {
+//     try {
+//       if (!req.file) {
+//         return res.status(400).json({ error: 'No file uploaded' });
+//       }
 
-      // Create file metadata in MongoDB
-      const file = new File({
-        customerId: req.params.customerId,
-        filename: req.file.filename,
-        originalname: req.file.originalname,
-        path: req.file.path,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-      });
+//       // Create file metadata in MongoDB
+//       const file = new File({
+//         customerId: req.params.customerId,
+//         filename: req.file.filename,
+//         originalname: req.file.originalname,
+//         path: req.file.path,
+//         size: req.file.size,
+//         mimetype: req.file.mimetype,
+//       });
 
-      await file.save();
+//       await file.save();
 
-      res.status(201).json({
-        message: 'File uploaded successfully',
-        file: {
-          id: file._id,
-          originalname: file.originalname,
-          filename: file.filename,
-          size: file.size,
-          mimetype: file.mimetype,
-          uploadDate: file.uploadDate,
-        },
-      });
-    } catch (error) {
-      console.error('Upload error:', error);
-      res.status(500).json({ error: 'Failed to upload file' });
-    }
-  },
-);
+//       res.status(201).json({
+//         message: 'File uploaded successfully',
+//         file: {
+//           id: file._id,
+//           originalname: file.originalname,
+//           filename: file.filename,
+//           size: file.size,
+//           mimetype: file.mimetype,
+//           uploadDate: file.uploadDate,
+//         },
+//       });
+//     } catch (error) {
+//       console.error('Upload error:', error);
+//       res.status(500).json({ error: 'Failed to upload file' });
+//     }
+//   },
+// );
 
 // get all files for a customer
 app.get('/api/customers/:customerId/files', async (req, res) => {

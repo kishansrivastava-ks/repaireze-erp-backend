@@ -62,6 +62,68 @@ export const addReceivable = async (req, res) => {
   }
 };
 
+// export const addPayable = async (req, res) => {
+//   try {
+//     const {
+//       vendorId,
+//       serviceType,
+//       paymentAmount,
+//       paymentStatus,
+//       invoiceNumber,
+//     } = req.body;
+
+//     console.log(
+//       vendorId,
+//       serviceType,
+//       paymentAmount,
+//       paymentStatus,
+//       invoiceNumber,
+//     );
+
+//     if (!vendorId || !serviceType || !paymentAmount || !paymentStatus)
+//       return res.status(400).json({
+//         message: 'All fields are required',
+//       });
+
+//     if (paymentStatus === 'done' && (!paymentAmount || !invoiceNumber)) {
+//       return res.status(400).json({
+//         message:
+//           'Amount and Invoice Number are required when payment status is done',
+//       });
+//     }
+
+//     console.log('finding vendor');
+//     const vendor = await Vendor.findById(vendorId);
+//     if (!vendor)
+//       return res.status(404).json({
+//         message: 'Vendor not found',
+//       });
+
+//     console.log('vendor found', vendor);
+//     console.log('creating payable');
+
+//     const newPayable = new Payable({
+//       vendorId,
+//       vendorName: vendor.name,
+//       vendorMobile: vendor.mobile,
+//       serviceType,
+//       paymentAmount,
+//       paymentStatus,
+//       invoiceNumber,
+//     });
+//     await newPayable.save();
+//     res.status(201).json({
+//       message: 'Payable added successfully',
+//       newPayable,
+//     });
+//   } catch (error) {
+//     res.status(500).json({
+//       message: 'Error adding payable',
+//       error,
+//     });
+//   }
+// };
+
 export const addPayable = async (req, res) => {
   try {
     const {
@@ -70,20 +132,34 @@ export const addPayable = async (req, res) => {
       paymentAmount,
       paymentStatus,
       invoiceNumber,
-    } = req.body;
+    } = req.body; // Text fields are in req.body
+
+    // The uploaded file (if any) is in req.file
+    const qrCodeImageFile = req.file;
 
     console.log(
+      'Request Body:',
       vendorId,
       serviceType,
       paymentAmount,
       paymentStatus,
       invoiceNumber,
     );
+    if (qrCodeImageFile) {
+      console.log(
+        'Uploaded QR Code File:',
+        qrCodeImageFile.originalname,
+        qrCodeImageFile.mimetype,
+        qrCodeImageFile.size,
+      );
+    }
 
-    if (!vendorId || !serviceType || !paymentAmount || !paymentStatus)
+    if (!vendorId || !serviceType || !paymentAmount || !paymentStatus) {
       return res.status(400).json({
-        message: 'All fields are required',
+        message:
+          'Vendor ID, Service Type, Payment Amount, and Payment Status fields are required',
       });
+    }
 
     if (paymentStatus === 'done' && (!paymentAmount || !invoiceNumber)) {
       return res.status(400).json({
@@ -94,13 +170,27 @@ export const addPayable = async (req, res) => {
 
     console.log('finding vendor');
     const vendor = await Vendor.findById(vendorId);
-    if (!vendor)
+    if (!vendor) {
       return res.status(404).json({
         message: 'Vendor not found',
       });
+    }
 
-    console.log('vendor found', vendor);
+    console.log('vendor found', vendor.name);
     console.log('creating payable');
+
+    let qrCodeImageBase64 = '';
+    if (qrCodeImageFile) {
+      // Check file size again (multer should also do this, but good for safety)
+      if (qrCodeImageFile.size > 1024 * 1024 * 1) {
+        // 1MB
+        return res
+          .status(400)
+          .json({ message: 'QR code image file too large (max 1MB).' });
+      }
+      // Convert the buffer to a Base64 string
+      qrCodeImageBase64 = `data:${qrCodeImageFile.mimetype};base64,${qrCodeImageFile.buffer.toString('base64')}`;
+    }
 
     const newPayable = new Payable({
       vendorId,
@@ -110,16 +200,30 @@ export const addPayable = async (req, res) => {
       paymentAmount,
       paymentStatus,
       invoiceNumber,
+      qrCodeImage: qrCodeImageBase64, // <<< --- SAVE THE BASE64 STRING
     });
+
     await newPayable.save();
     res.status(201).json({
       message: 'Payable added successfully',
-      newPayable,
+      newPayable, // This will now include the qrCodeImage field
     });
   } catch (error) {
+    console.error('Error adding payable:', error);
+    // Multer specific error handling for file size
+    if (error instanceof multer.MulterError) {
+      if (error.code === 'LIMIT_FILE_SIZE') {
+        return res
+          .status(400)
+          .json({
+            message: 'QR code image file is too large. Max 1MB allowed.',
+          });
+      }
+    }
+    // General error
     res.status(500).json({
       message: 'Error adding payable',
-      error,
+      error: error.message, // Send a cleaner error message
     });
   }
 };
