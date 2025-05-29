@@ -12,6 +12,7 @@ const vendorSchema = new mongoose.Schema(
       enum: ['complete', 'incomplete'],
       default: 'incomplete',
     },
+    qrCodeImage: { type: String, default: null }, // Store as Base64 string, optional
   },
   { timestamps: true },
 );

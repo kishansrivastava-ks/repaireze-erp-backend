@@ -211,6 +211,32 @@ export const addVendor = async (req, res) => {
   try {
     const { name, mobile, category, address, alternateMobile, kyc_status } =
       req.body;
+
+    // The uploaded file (if any) is in req.file
+    const qrCodeImageFile = req.file;
+
+    if (qrCodeImageFile) {
+      console.log(
+        'Uploaded QR Code File:',
+        qrCodeImageFile.originalname,
+        qrCodeImageFile.mimetype,
+        qrCodeImageFile.size,
+      );
+    }
+
+    let qrCodeImageBase64 = '';
+    if (qrCodeImageFile) {
+      // Check file size again (multer should also do this, but good for safety)
+      if (qrCodeImageFile.size > 1024 * 1024 * 1) {
+        // 1MB
+        return res
+          .status(400)
+          .json({ message: 'QR code image file too large (max 1MB).' });
+      }
+      // Convert the buffer to a Base64 string
+      qrCodeImageBase64 = `data:${qrCodeImageFile.mimetype};base64,${qrCodeImageFile.buffer.toString('base64')}`;
+    }
+
     const newVendor = new Vendor({
       name,
       mobile,
@@ -218,11 +244,15 @@ export const addVendor = async (req, res) => {
       address,
       alternateMobile,
       kyc_status,
+      qrCodeImage: qrCodeImageBase64,
     });
     await newVendor.save();
     res.status(201).json(newVendor);
   } catch (error) {
-    res.status(400).json({ message: 'Error adding vendor' });
+    res.status(400).json({
+      error,
+      message: 'Error adding vendor',
+    });
   }
 };
 
@@ -268,6 +298,7 @@ export const requestVendorDeletion = async (req, res) => {
     // send otp via mail
     await sendMail({
       to: 'mendt.otp@rprb2b.com',
+      // to: 'kishan.repaireze@gmail.com',
       subject: 'OTP for Vendor Deletion',
       text: `Your OTP for deleting vendor ${vendor.name} is: ${otp}. This will expire in 10 minutes.`,
     });

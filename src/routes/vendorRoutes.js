@@ -8,11 +8,32 @@ import {
   searchVendors,
   verifyVendorDeletion,
 } from '../controllers/staffController.js';
+import multer from 'multer';
 
 const router = express.Router();
 
+// --- Multer Configuration ---
+const storage = multer.memoryStorage(); // Store image in memory as a Buffer
+
+const fileFilter = (req, file, cb) => {
+  // Accept only image files
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Not an image! Please upload an image file.'), false);
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1024 * 1024 * 1, // 1 MB limit for QR code images
+  },
+  fileFilter: fileFilter,
+});
+
 router.get('/', protect, getVendors);
-router.post('/add', protect, addVendor);
+router.post('/add', protect, upload.single('qrCodeImageFile'), addVendor);
 router.get('/search', protect, searchVendors);
 router.patch('/:id/update', protect, editVendor);
 

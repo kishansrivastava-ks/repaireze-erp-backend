@@ -134,9 +134,6 @@ export const addPayable = async (req, res) => {
       invoiceNumber,
     } = req.body; // Text fields are in req.body
 
-    // The uploaded file (if any) is in req.file
-    const qrCodeImageFile = req.file;
-
     console.log(
       'Request Body:',
       vendorId,
@@ -145,14 +142,6 @@ export const addPayable = async (req, res) => {
       paymentStatus,
       invoiceNumber,
     );
-    if (qrCodeImageFile) {
-      console.log(
-        'Uploaded QR Code File:',
-        qrCodeImageFile.originalname,
-        qrCodeImageFile.mimetype,
-        qrCodeImageFile.size,
-      );
-    }
 
     if (!vendorId || !serviceType || !paymentAmount || !paymentStatus) {
       return res.status(400).json({
@@ -179,28 +168,15 @@ export const addPayable = async (req, res) => {
     console.log('vendor found', vendor.name);
     console.log('creating payable');
 
-    let qrCodeImageBase64 = '';
-    if (qrCodeImageFile) {
-      // Check file size again (multer should also do this, but good for safety)
-      if (qrCodeImageFile.size > 1024 * 1024 * 1) {
-        // 1MB
-        return res
-          .status(400)
-          .json({ message: 'QR code image file too large (max 1MB).' });
-      }
-      // Convert the buffer to a Base64 string
-      qrCodeImageBase64 = `data:${qrCodeImageFile.mimetype};base64,${qrCodeImageFile.buffer.toString('base64')}`;
-    }
-
     const newPayable = new Payable({
       vendorId,
       vendorName: vendor.name,
       vendorMobile: vendor.mobile,
+      qrCodeImage: vendor.qrCodeImage,
       serviceType,
       paymentAmount,
       paymentStatus,
       invoiceNumber,
-      qrCodeImage: qrCodeImageBase64, // <<< --- SAVE THE BASE64 STRING
     });
 
     await newPayable.save();
@@ -213,11 +189,9 @@ export const addPayable = async (req, res) => {
     // Multer specific error handling for file size
     if (error instanceof multer.MulterError) {
       if (error.code === 'LIMIT_FILE_SIZE') {
-        return res
-          .status(400)
-          .json({
-            message: 'QR code image file is too large. Max 1MB allowed.',
-          });
+        return res.status(400).json({
+          message: 'QR code image file is too large. Max 1MB allowed.',
+        });
       }
     }
     // General error
