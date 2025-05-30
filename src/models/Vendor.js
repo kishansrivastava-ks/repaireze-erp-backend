@@ -13,6 +13,8 @@ const vendorSchema = new mongoose.Schema(
       default: 'incomplete',
     },
     qrCodeImage: { type: String, default: null }, // Store as Base64 string, optional
+    aadharImage: { type: String, default: null },
+    bankDetails: { type: String, default: null },
   },
   { timestamps: true },
 );

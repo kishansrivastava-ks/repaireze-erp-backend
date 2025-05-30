@@ -207,34 +207,98 @@ export const getVendors = async (req, res) => {
 };
 
 // Add a vendor
+// export const addVendor = async (req, res) => {
+//   try {
+//     const { name, mobile, category, address, alternateMobile, kyc_status } =
+//       req.body;
+
+//     // The uploaded file (if any) is in req.file
+//     const qrCodeImageFile = req.file;
+
+//     if (qrCodeImageFile) {
+//       console.log(
+//         'Uploaded QR Code File:',
+//         qrCodeImageFile.originalname,
+//         qrCodeImageFile.mimetype,
+//         qrCodeImageFile.size,
+//       );
+//     }
+
+//     let qrCodeImageBase64 = '';
+//     if (qrCodeImageFile) {
+//       // Check file size again (multer should also do this, but good for safety)
+//       if (qrCodeImageFile.size > 1024 * 1024 * 1) {
+//         // 1MB
+//         return res
+//           .status(400)
+//           .json({ message: 'QR code image file too large (max 1MB).' });
+//       }
+//       // Convert the buffer to a Base64 string
+//       qrCodeImageBase64 = `data:${qrCodeImageFile.mimetype};base64,${qrCodeImageFile.buffer.toString('base64')}`;
+//     }
+
+//     const newVendor = new Vendor({
+//       name,
+//       mobile,
+//       category,
+//       address,
+//       alternateMobile,
+//       kyc_status,
+//       qrCodeImage: qrCodeImageBase64,
+//     });
+//     await newVendor.save();
+//     res.status(201).json(newVendor);
+//   } catch (error) {
+//     res.status(400).json({
+//       error,
+//       message: 'Error adding vendor',
+//     });
+//   }
+// };
+
 export const addVendor = async (req, res) => {
   try {
     const { name, mobile, category, address, alternateMobile, kyc_status } =
       req.body;
 
-    // The uploaded file (if any) is in req.file
-    const qrCodeImageFile = req.file;
+    const files = req.files;
+    let qrCodeImageBase64 = null;
+    let aadharImageBase64 = null;
+    let bankDetailsBase64 = null;
 
-    if (qrCodeImageFile) {
-      console.log(
-        'Uploaded QR Code File:',
-        qrCodeImageFile.originalname,
-        qrCodeImageFile.mimetype,
-        qrCodeImageFile.size,
-      );
-    }
+    const processFile = (fileArray, fieldName) => {
+      if (fileArray && fileArray[0]) {
+        const file = fileArray[0];
+        console.log(
+          `Uploaded ${fieldName} File:`,
+          file.originalname,
+          file.mimetype,
+          file.size,
+        );
 
-    let qrCodeImageBase64 = '';
-    if (qrCodeImageFile) {
-      // Check file size again (multer should also do this, but good for safety)
-      if (qrCodeImageFile.size > 1024 * 1024 * 1) {
-        // 1MB
-        return res
-          .status(400)
-          .json({ message: 'QR code image file too large (max 1MB).' });
+        if (file.size > 1024 * 1024 * 1) {
+          // 1MB
+
+          throw new Error(`${fieldName} file too large (max 1MB).`);
+        }
+        return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
       }
-      // Convert the buffer to a Base64 string
-      qrCodeImageBase64 = `data:${qrCodeImageFile.mimetype};base64,${qrCodeImageFile.buffer.toString('base64')}`;
+      return null;
+    };
+
+    if (files) {
+      if (files.qrCodeImageFile) {
+        qrCodeImageBase64 = processFile(files.qrCodeImageFile, 'QR Code Image');
+      }
+      if (files.aadharImageFile) {
+        aadharImageBase64 = processFile(files.aadharImageFile, 'Aadhar Image');
+      }
+      if (files.bankDetailsFile) {
+        bankDetailsBase64 = processFile(
+          files.bankDetailsFile,
+          'Bank Details Image',
+        );
+      }
     }
 
     const newVendor = new Vendor({
@@ -245,13 +309,18 @@ export const addVendor = async (req, res) => {
       alternateMobile,
       kyc_status,
       qrCodeImage: qrCodeImageBase64,
+      aadharImage: aadharImageBase64,
+      bankDetails: bankDetailsBase64,
     });
+
     await newVendor.save();
     res.status(201).json(newVendor);
   } catch (error) {
+    console.error('Error adding vendor:', error);
+
     res.status(400).json({
-      error,
-      message: 'Error adding vendor',
+      message: error.message || 'Error adding vendor',
+      error: error.toString(),
     });
   }
 };
