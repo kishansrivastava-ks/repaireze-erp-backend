@@ -33,7 +33,6 @@ const upload = multer({
 });
 
 router.get('/', protect, getVendors);
-// router.post('/add', protect, upload.single('qrCodeImageFile'), addVendor);
 router.post(
   '/add',
   protect,
@@ -45,7 +44,17 @@ router.post(
   addVendor,
 );
 router.get('/search', protect, searchVendors);
-router.patch('/:id/update', protect, editVendor);
+// router.patch('/:id/update', protect, editVendor);
+router.patch(
+  '/:id/update',
+  protect,
+  upload.fields([
+    { name: 'qrCodeImageFile', maxCount: 1 },
+    { name: 'aadharImageFile', maxCount: 1 },
+    { name: 'bankDetailsFile', maxCount: 1 },
+  ]),
+  editVendor,
+);
 
 router.post('/request-delete/:id', protect, requestVendorDeletion);
 router.post('/verify-delete', protect, verifyVendorDeletion);

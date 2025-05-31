@@ -207,54 +207,6 @@ export const getVendors = async (req, res) => {
 };
 
 // Add a vendor
-// export const addVendor = async (req, res) => {
-//   try {
-//     const { name, mobile, category, address, alternateMobile, kyc_status } =
-//       req.body;
-
-//     // The uploaded file (if any) is in req.file
-//     const qrCodeImageFile = req.file;
-
-//     if (qrCodeImageFile) {
-//       console.log(
-//         'Uploaded QR Code File:',
-//         qrCodeImageFile.originalname,
-//         qrCodeImageFile.mimetype,
-//         qrCodeImageFile.size,
-//       );
-//     }
-
-//     let qrCodeImageBase64 = '';
-//     if (qrCodeImageFile) {
-//       // Check file size again (multer should also do this, but good for safety)
-//       if (qrCodeImageFile.size > 1024 * 1024 * 1) {
-//         // 1MB
-//         return res
-//           .status(400)
-//           .json({ message: 'QR code image file too large (max 1MB).' });
-//       }
-//       // Convert the buffer to a Base64 string
-//       qrCodeImageBase64 = `data:${qrCodeImageFile.mimetype};base64,${qrCodeImageFile.buffer.toString('base64')}`;
-//     }
-
-//     const newVendor = new Vendor({
-//       name,
-//       mobile,
-//       category,
-//       address,
-//       alternateMobile,
-//       kyc_status,
-//       qrCodeImage: qrCodeImageBase64,
-//     });
-//     await newVendor.save();
-//     res.status(201).json(newVendor);
-//   } catch (error) {
-//     res.status(400).json({
-//       error,
-//       message: 'Error adding vendor',
-//     });
-//   }
-// };
 
 export const addVendor = async (req, res) => {
   try {
@@ -325,23 +277,69 @@ export const addVendor = async (req, res) => {
   }
 };
 
+// export const editVendor = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const updateData = req.body;
+
+//     const updatedVendor = await Vendor.findByIdAndUpdate(id, updateData, {
+//       new: true,
+//     });
+//     if (!updatedVendor) {
+//       return res.status(404).json({ message: 'Vendor not found' });
+//     }
+//     res.status(200).json({
+//       message: 'Vendor updated successfully',
+//       vendor: updatedVendor,
+//     });
+//   } catch (error) {
+//     res.status(400).json({ message: 'Error updating vendor' });
+//   }
+// };
+
+// staffController.js
+
 export const editVendor = async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = req.body;
+    const files = req.files;
+
+    // Helper function to convert file buffer to Base64
+    const fileToBase64 = (file) => {
+      return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    };
+
+    if (files) {
+      if (files.qrCodeImageFile && files.qrCodeImageFile[0]) {
+        updateData.qrCodeImage = fileToBase64(files.qrCodeImageFile[0]);
+      }
+      if (files.aadharImageFile && files.aadharImageFile[0]) {
+        updateData.aadharImage = fileToBase64(files.aadharImageFile[0]);
+      }
+      if (files.bankDetailsFile && files.bankDetailsFile[0]) {
+        updateData.bankDetails = fileToBase64(files.bankDetailsFile[0]);
+      }
+    }
 
     const updatedVendor = await Vendor.findByIdAndUpdate(id, updateData, {
       new: true,
+      runValidators: true,
     });
+
     if (!updatedVendor) {
       return res.status(404).json({ message: 'Vendor not found' });
     }
+
     res.status(200).json({
       message: 'Vendor updated successfully',
       vendor: updatedVendor,
     });
   } catch (error) {
-    res.status(400).json({ message: 'Error updating vendor' });
+    console.error('Error updating vendor:', error);
+    res
+      .status(400)
+      .json({ message: 'Error updating vendor', error: error.message });
   }
 };
 
