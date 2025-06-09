@@ -25,6 +25,15 @@ const serviceSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+
+    // linking to vendor
+    vendorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Vendor',
+      required: true,
+    },
+    vendorName: { type: String, required: true },
+    vendorMobile: { type: String, required: true },
   },
   { timestamps: true },
 );

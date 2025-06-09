@@ -52,7 +52,7 @@ export const verifyPin = async (req, res) => {
   try {
     const user = req.user;
     const { pin } = req.body;
-    // console.log(pin);
+    console.log(pin);
 
     if (!user) {
       return res

@@ -150,13 +150,22 @@ export const getServices = async (req, res) => {
 // Add a service
 export const addService = async (req, res) => {
   try {
-    const { customerId, serviceType, status, scheduledDate, payment } =
-      req.body;
+    const {
+      customerId,
+      serviceType,
+      status,
+      scheduledDate,
+      payment,
+      vendorId,
+    } = req.body;
     const userId = req.user.id;
-    // console.log(userId);
+
     const customer = await Customer.findById(customerId);
     if (!customer)
       return res.status(404).json({ message: 'Customer not found' });
+
+    const vendor = await Vendor.findById(vendorId);
+    if (!vendor) return res.status(404).json({ message: 'Vendor not found' });
 
     const newService = new Service({
       customerName: customer.name,
@@ -167,6 +176,9 @@ export const addService = async (req, res) => {
       payment,
       userId,
       customerId,
+      vendorId,
+      vendorName: vendor.name,
+      vendorMobile: vendor.mobile,
     });
     await newService.save();
     res.status(201).json(newService);
@@ -305,7 +317,7 @@ export const editVendor = async (req, res) => {
     const updateData = req.body;
     const files = req.files;
 
-    // Helper function to convert file buffer to Base64
+    // helper function to convert file buffer to base64
     const fileToBase64 = (file) => {
       return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
     };
@@ -318,10 +330,9 @@ export const editVendor = async (req, res) => {
         updateData.aadharImage = fileToBase64(files.aadharImageFile[0]);
       }
       if (files.bankDetailsFile && files.bankDetailsFile[0]) {
-        updateData.bankDetails = fileToBase64(files.bankDetailsFile[0]);
+        updateData.bankDetailsFile = fileToBase64(files.bankDetailsFile[0]);
       }
     }
-
     const updatedVendor = await Vendor.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
@@ -336,10 +347,11 @@ export const editVendor = async (req, res) => {
       vendor: updatedVendor,
     });
   } catch (error) {
-    console.error('Error updating vendor:', error);
-    res
-      .status(400)
-      .json({ message: 'Error updating vendor', error: error.message });
+    console.error('Error updating vendor:', error.message);
+    res.status(400).json({
+      message: 'Error updating vendor',
+      error: error.message,
+    });
   }
 };
 
