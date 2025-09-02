@@ -62,32 +62,6 @@ export const searchB2bCustomer = async (req, res) => {
   }
 };
 
-export const searchVendors = async (req, res) => {
-  try {
-    const { query } = req.query;
-    if (!query) {
-      return res.status(400).json({
-        message: 'Vendor name/mobile required to search',
-      });
-    }
-
-    const vendors = await Vendor.find({
-      $or: [
-        {
-          name: { $regex: query, $options: 'i' },
-        },
-        {
-          mobile: { $regex: query, $options: 'i' },
-        },
-      ],
-    });
-
-    res.status(200).json(vendors);
-  } catch (error) {
-    res.status(500).json({ message: 'Error searching vendors' });
-  }
-};
-
 // Add a customer
 export const addCustomer = async (req, res) => {
   try {
@@ -218,21 +192,35 @@ export const getVendors = async (req, res) => {
   }
 };
 
-export const searchVendor = async (req, res) => {
+export const searchVendors = async (req, res) => {
   try {
-    const { query } = req.params;
-    const vendors = await Vendor.find({
-      $or: [
-        { name: { $regex: query, $options: 'i' } },
-        { mobile: { $regex: query, $options: 'i' } },
-      ],
-    });
+    const { name, mobile } = req.query;
+
+    // if no search param given
+    if (!name && !mobile) {
+      return res
+        .status(400)
+        .json({ message: 'Please provide name or mobile to search' });
+    }
+
+    const conditions = [];
+    if (name) {
+      conditions.push({ name: { $regex: name, $options: 'i' } });
+    }
+    if (mobile) {
+      conditions.push({ mobile: { $regex: mobile, $options: 'i' } });
+    }
+
+    const vendors = await Vendor.find({ $or: conditions });
+
     const response = vendors.map((vendor) => ({
       name: vendor.name,
       mobile: vendor.mobile,
     }));
+
     res.json(response);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
