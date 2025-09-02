@@ -33,8 +33,6 @@ const upload = multer({
 });
 
 router.get('/', protect, getVendors);
-// router.get('/search', searchVendor);
-
 router.post(
   '/add',
   protect,
