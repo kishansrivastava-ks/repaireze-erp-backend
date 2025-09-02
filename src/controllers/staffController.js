@@ -85,6 +85,7 @@ export const searchVendors = async (req, res) => {
     const response = vendors.map((vendor) => ({
       name: vendor.name,
       mobile: vendor.mobile,
+      id: vendor._id
     }));
 
     res.status(200).json(response);
