@@ -218,6 +218,25 @@ export const getVendors = async (req, res) => {
   }
 };
 
+export const searchVendor = async (req, res) => {
+  try {
+    const { query } = req.params;
+    const vendors = await Vendor.find({
+      $or: [
+        { name: { $regex: query, $options: 'i' } },
+        { mobile: { $regex: query, $options: 'i' } },
+      ],
+    });
+    const response = vendors.map((vendor) => ({
+      name: vendor.name,
+      mobile: vendor.mobile,
+    }));
+    res.json(response);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Add a vendor
 
 export const addVendor = async (req, res) => {

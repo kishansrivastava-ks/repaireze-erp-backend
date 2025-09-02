@@ -5,6 +5,7 @@ import {
   editVendor,
   getVendors,
   requestVendorDeletion,
+  searchVendor,
   searchVendors,
   verifyVendorDeletion,
 } from '../controllers/staffController.js';
@@ -33,6 +34,8 @@ const upload = multer({
 });
 
 router.get('/', protect, getVendors);
+router.get('/search', searchVendor);
+
 router.post(
   '/add',
   protect,
@@ -43,7 +46,7 @@ router.post(
   ]),
   addVendor,
 );
-router.get('/search', protect, searchVendors);
+router.get('/search', searchVendors);
 // router.patch('/:id/update', protect, editVendor);
 router.patch(
   '/:id/update',
